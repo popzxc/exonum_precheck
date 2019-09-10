@@ -81,7 +81,7 @@ def run_check():
     for _, result in lints_results:
         print(result)
 
-    overall_success = all([lambda x: x[0] for x in test_results + lints_results])
+    overall_success = all([lambda x: x[0] == 0 for x in test_results + lints_results])
     if overall_success:
         # Success exit code.
         exit(0)
@@ -92,7 +92,7 @@ def run_check():
 
 def load_travis_config():
     try:
-        with open(".travis.yml") as file:
+        with open(".travis.yml", "r") as file:
             return yaml.load(file)
     except FileNotFoundError:
         print(_red("Not an exonum root directory, aborting"))

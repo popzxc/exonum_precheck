@@ -51,7 +51,8 @@ Example output (actually it's colored):
 
 This script can be also used as a prepush hook:
 ```sh
-cat "#!/bin/sh\nexit `python3 -m exonum_precheck`\n" > ./exonum_folder/.git/hooks/pre-push
+echo '#!/bin/sh\npython3 -m exonum_precheck || exit 1\n' > ./exonum_folder/.git/hooks/pre-push
+chmod +x ./exonum_folder/.git/hooks/pre-push
 ```
 
 With that hook you won't be able to push unless all the expected CI checks are passed.
