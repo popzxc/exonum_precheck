@@ -1,4 +1,6 @@
 import subprocess
+import os
+import yaml
 
 
 def _cyan(message):
@@ -13,77 +15,76 @@ def _green(message):
     return "\033[92m {}\033[00m".format(message)
 
 
+def _yellow(message):
+    return "\033[93m {}\033[00m" .format(message)
+
+
+def _warning(message):
+    return _yellow("Warning: ") + message
+
+
+def _ok(message):
+    return _green("Success: ") + message
+
+
+def _err(message):
+    return _red("Error: ") + message
+
+
+def _info(message):
+    return _cyan(message)
+
+
 def _run_command(command):
     arguments = command.split()
     result = subprocess.call(arguments)
 
-    msg = f"{command}: "
     if result == 0:
-        msg += _green("passed")
+        msg += _ok(command)
     else:
-        msg += _red("failed")
+        msg += _err(command)
 
     return msg
 
 
-def run_tests():
-    """ Runs all the tests. """
-    print(_cyan("Running tests:"))
-
-    results = []
-
-    commands = [
-        "cargo test",
-        "cargo run -p exonum --example explorer",
-        "cargo run -p exonum-testkit --example timestamping",
-        "cargo run -p exonum-time --example simple_service"
-    ]
-
-    return [_run_command(command) for command in commands]
-
-
-def run_lints():
-    """ Runs all the lints. """
-    print(_cyan("Running lints:"))
-
-    results = []
-
-    results.append(_run_command("npm run cspell"))
-    results.append(_run_command("npm run md"))
-
-    # Clippy lints.
-    results.append(_run_command('cargo clippy --all --benches --features "long_benchmarks"'))
-
-    # Other cargo lints.
-    results.append(_run_command("cargo fmt --all -- --check"))
-    subprocess.call("cargo clean --doc".split())
-    results.append(_run_command("cargo doc --no-deps"))
-
-    # Temporary hack to ignore warnings about missing pages.
-    subprocess.call("mkdir -p target/doc/exonum_configuration".split())
-    subprocess.call("mkdir -p target/std/string".split())
-    subprocess.call("touch target/std/string/struct.String.html".split())
-    subprocess.call("touch target/std/primitive.usize.html".split())
-    subprocess.call("touch target/doc/enum.HashTag.html".split())
-
-    results.append(_run_command("cargo deadlinks --dir target/doc"))
-
-    return results
+def verify_rustc_version(expected):
+    proc = subprocess.Popen(["rustc", "--version"], stdout=subprocess.PIPE)
+    outs, errs = proc.communicate()
+    # Expected output format is "rustc 1.37.0 (eae3437df 2019-08-13)"
+    return str(outs, 'utf-8').split()[1] == expected
 
 
 def run_check():
-    """ Runs the tests and lints. """
-    print(_cyan("Exonum precheck"))
+    config = load_travis_config()
+    expected_rust_version = config["rust"][0]
 
-    test_results = run_tests()
-    lints_results = run_lints()
+    if not verify_rustc_version(expected_rust_version):
+        print(_warning("Local ruscts differs from one in .travis.yml"))
 
-    print(_cyan("Overall results:"))
+    jobs = config["jobs"]["include"]
+    test_commands = []
+    lints_commands = []
+    for job in jobs:
+        if job["name"] == "unit-test":
+            test_commands = job["script"]
+        elif job["name"] == "lints":
+            lints_commands = job["script"]
 
-    print(_cyan("Test:"))
+    test_results = [_run_command(command) for command in test_commands]
+    lints_results = [_run_command(command) for command in lints_commands]
+
+    print(_info("Tests results:"))
     for result in test_results:
         print(result)
 
-    print(_cyan("Lints:"))
+    print(_info("Lints results:"))
     for result in lints_results:
         print(result)
+
+
+def load_travis_config():
+    try:
+        with open(".travis.yml") as file:
+            return yaml.load(file)
+    except FileNotFoundError:
+        print(_red("Not an exonum root directory, aborting"))
