@@ -40,11 +40,11 @@ def _run_command(command):
     result = subprocess.call(arguments)
 
     if result == 0:
-        msg += _ok(command)
+        msg = _ok(command)
     else:
-        msg += _err(command)
+        msg = _err(command)
 
-    return msg
+    return (result, msg)
 
 
 def verify_rustc_version(expected):
@@ -74,12 +74,20 @@ def run_check():
     lints_results = [_run_command(command) for command in lints_commands]
 
     print(_info("Tests results:"))
-    for result in test_results:
+    for _, result in test_results:
         print(result)
 
     print(_info("Lints results:"))
-    for result in lints_results:
+    for _, result in lints_results:
         print(result)
+
+    overall_success = all([lambda x: x[0] for x in test_results + lints_results])
+    if overall_success:
+        # Success exit code.
+        exit(0)
+    else:
+        # Error exit code.
+        exit(1)
 
 
 def load_travis_config():
