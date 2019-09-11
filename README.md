@@ -47,6 +47,16 @@ Example output (actually it's colored):
  Success: cargo deadlinks --dir target/doc
 ```
 
+You can also specify jobs to run manually.
+
+```sh
+python3 -m exonum_precheck --jobs linux-tests sample-job lints tests
+```
+
+Those jobs will be executed instead of default ones ("unit-test", "lints") in the provided order.
+
+This maybe helpful if you want to use this script on another repository.
+
 ## Using as a git hook
 
 This script can be also used as a prepush hook:
