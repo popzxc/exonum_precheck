@@ -54,7 +54,8 @@ def verify_rustc_version(expected):
     return str(outs, 'utf-8').split()[1] == expected
 
 
-def run_check():
+def run_check(args):
+    scheduled_jobs = args.jobs
     config = load_travis_config()
     expected_rust_version = config["rust"][0]
 
@@ -62,26 +63,33 @@ def run_check():
         print(_warning("Local ruscts differs from one in .travis.yml"))
 
     jobs = config["jobs"]["include"]
-    test_commands = []
-    lints_commands = []
+
+    # Initialize jobs to run.
+    commands = dict()
+    for scheduled_job in scheduled_jobs:
+        commands[scheduled_job] = []
+
     for job in jobs:
-        if job["name"] == "unit-test":
-            test_commands = job["script"]
-        elif job["name"] == "lints":
-            lints_commands = job["script"]
+        if job["name"] in scheduled_jobs:
+            commands[job["name"]] = job["script"]
 
-    test_results = [_run_command(command) for command in test_commands]
-    lints_results = [_run_command(command) for command in lints_commands]
+    # Run everything and collect results.
+    results = dict()
+    overall_success = True
 
-    print(_info("Tests results:"))
-    for _, result in test_results:
-        print(result)
+    for scheduled_job in scheduled_jobs:
+        results[scheduled_job] = [_run_command(command) for command in commands[scheduled_job]]
 
-    print(_info("Lints results:"))
-    for _, result in lints_results:
-        print(result)
+        overall_success = overall_success and all([lambda x: x[0] == 0 for x in results[scheduled_job]])
 
-    overall_success = all([lambda x: x[0] == 0 for x in test_results + lints_results])
+    # Print output for every job.
+    for scheduled_job in scheduled_jobs:
+        print(_info(f"{scheduled_job} results:"))
+        for _, result in results[scheduled_job]:
+            print(result)
+
+        print("")
+
     if overall_success:
         # Success exit code.
         exit(0)
