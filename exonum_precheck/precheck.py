@@ -93,6 +93,6 @@ def run_check():
 def load_travis_config():
     try:
         with open(".travis.yml", "r") as file:
-            return yaml.load(file)
+            return yaml.load(file, Loader=yaml.FullLoader)
     except FileNotFoundError:
         print(_red("Not an exonum root directory, aborting"))
