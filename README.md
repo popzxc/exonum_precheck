@@ -68,5 +68,5 @@ pip install -U exonum_precheck
 
 ## LICENSE
 
-Calorizator parser is licensed under the MIT License.
+`exonum_precheck` is licensed under the MIT License.
 See [LICENSE](LICENSE) for details.
