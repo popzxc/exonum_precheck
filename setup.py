@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="exonum_precheck",
-    version="0.1.3",
+    version="0.1.4",
     author="Igor Aleksanov",
     description="Exonum precheck deployment script",
     url="https://github.com/popzxc/exonum_precheck",
