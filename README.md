@@ -58,6 +58,21 @@ chmod +x ./exonum_folder/.git/hooks/pre-push
 With that hook you won't be able to push unless all the expected CI checks are passed.
 However, be careful: if you're going to work on a work-in-progress branch which'll have broken tests, you'll have to temporary remove the hook.
 
+Example of more advanced hook:
+
+```sh
+#!/bin/sh
+npm install && git checkout package-lock.json package.json
+
+export RUST_BACKTRACE=0
+export RUST_LOG=off
+export RUST_TEST_THREADS=4
+export CARGO_BUILD_JOBS=4
+ulimit -n 2048
+
+python3 -m exonum_precheck || exit 1
+```
+
 ## Installing
 
 Install and update using [pip](https://pip.pypa.io/en/stable/quickstart/):
@@ -68,5 +83,5 @@ pip install -U exonum_precheck
 
 ## LICENSE
 
-Calorizator parser is licensed under the MIT License.
+`exonum_precheck` is licensed under the MIT License.
 See [LICENSE](LICENSE) for details.
