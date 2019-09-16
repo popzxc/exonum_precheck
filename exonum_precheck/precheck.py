@@ -1,6 +1,7 @@
 import subprocess
 import os
 import yaml
+import sys
 
 
 def _cyan(message):
@@ -80,7 +81,7 @@ def run_check(args):
     for scheduled_job in scheduled_jobs:
         results[scheduled_job] = [_run_command(command) for command in commands[scheduled_job]]
 
-        overall_success = overall_success and all([lambda x: x[0] == 0 for x in results[scheduled_job]])
+        overall_success = overall_success and all(map(lambda x: x[0] == 0, results[scheduled_job]))
 
     # Print output for every job.
     for scheduled_job in scheduled_jobs:
@@ -92,10 +93,12 @@ def run_check(args):
 
     if overall_success:
         # Success exit code.
-        exit(0)
+        print(_ok("Exiting successfully"))
+        sys.exit(0)
     else:
         # Error exit code.
-        exit(1)
+        print(_err("Exiting with an error"))
+        sys.exit(1)
 
 
 def load_travis_config():
